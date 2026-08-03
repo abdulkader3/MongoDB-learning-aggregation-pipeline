@@ -16,9 +16,9 @@ export function RightPanel() {
   const usage = Object.entries(state.operatorUsage).sort((a, b) => b[1] - a[1]).slice(0, 8);
 
   return (
-    <aside className="flex w-72 shrink-0 flex-col border-l border-border bg-card/40">
+    <aside className="flex w-36 shrink-0 flex-col border-l border-border bg-card/40">
       <ScrollArea className="flex-1">
-        <div className="space-y-5 p-4">
+        <div className="space-y-4 p-3">
           <div>
             <div className="mb-2 flex items-center justify-between">
               <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -37,7 +37,7 @@ export function RightPanel() {
             <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               <Award className="h-3.5 w-3.5" /> Achievements
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 gap-2">
               {ACHIEVEMENTS.map((a) => {
                 const unlocked = Boolean(state.achievements[a.id]);
                 return (
@@ -87,10 +87,10 @@ export function RightPanel() {
               </div>
               <div className="space-y-1.5">
                 {usage.map(([op, count]) => (
-                  <div key={op} className="flex items-center gap-2 text-xs">
-                    <span className="w-24 shrink-0 font-mono text-muted-foreground">{op}</span>
+                  <div key={op} className="flex items-center gap-1.5 text-xs">
+                    <span className="min-w-0 flex-1 truncate font-mono text-muted-foreground">{op}</span>
                     <Progress value={Math.min(100, count * 20)} indicatorClassName="bg-info" className="h-1.5" />
-                    <span className="w-4 text-right text-muted-foreground/70">{count}</span>
+                    <span className="w-4 shrink-0 text-right text-muted-foreground/70">{count}</span>
                   </div>
                 ))}
               </div>
