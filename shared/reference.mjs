@@ -1,0 +1,190 @@
+// Reference pipelines used to (a) generate expected outputs and (b) show the
+// documented solution in the frontend's "Explain Mode" after a success.
+
+export const REFERENCE_PIPELINES = {
+  m01: [
+    { $project: { _id: 0, orderNumber: 1, userId: 1, status: 1, total: 1 } },
+  ],
+  m02: [{ $count: "totalProducts" }],
+  m03: [
+    { $match: { status: "delivered" } },
+    { $project: { _id: 0, orderNumber: 1, total: 1 } },
+  ],
+  m04: [
+    { $group: { _id: "$status", orders: { $sum: 1 } } },
+    { $sort: { orders: -1 } },
+  ],
+  m05: [
+    { $match: { total: { $gte: 250 } } },
+    { $project: { _id: 0, orderNumber: 1, userId: 1, total: 1 } },
+    { $sort: { total: -1 } },
+    { $limit: 10 },
+  ],
+  m06: [
+    { $match: { status: "delivered", itemsCount: { $gte: 3 }, paymentMethod: { $in: ["card", "paypal"] } } },
+    { $project: { _id: 0, orderNumber: 1, itemsCount: 1, total: 1 } },
+    { $sort: { total: -1 } },
+    { $limit: 10 },
+  ],
+  m07: [
+    { $group: { _id: "$categoryId", count: { $sum: 1 } } },
+    { $sort: { count: -1 } },
+    { $limit: 5 },
+  ],
+  m08: [
+    { $group: { _id: "$status", count: { $sum: 1 }, avgTotal: { $avg: "$total" }, minTotal: { $min: "$total" }, maxTotal: { $max: "$total" } } },
+    { $sort: { _id: 1 } },
+  ],
+  m09: [
+    { $group: { _id: { $dateToString: { format: "%Y-%m", date: "$createdAt" } }, revenue: { $sum: "$total" } } },
+    { $sort: { _id: 1 } },
+  ],
+  m10: [
+    { $lookup: { from: "orders", localField: "_id", foreignField: "userId", as: "orders" } },
+    { $project: { _id: 0, name: 1, email: 1, orderCount: { $size: "$orders" }, totalSpent: { $sum: "$orders.total" } } },
+  ],
+  m11: [
+    { $group: { _id: "$userId", totalSpend: { $sum: "$total" }, orders: { $sum: 1 } } },
+    { $sort: { totalSpend: -1 } },
+    { $limit: 5 },
+    { $lookup: { from: "users", localField: "_id", foreignField: "_id", as: "user" } },
+    { $unwind: "$user" },
+    { $project: { _id: 0, name: "$user.name", email: "$user.email", totalSpend: 1, orders: 1 } },
+  ],
+  m12: [
+    { $match: { status: "delivered" } },
+    { $unwind: "$items" },
+    { $project: { _id: 0, orderNumber: 1, productId: "$items.productId", name: "$items.name", qty: "$items.qty", price: "$items.price", lineTotal: { $multiply: ["$items.qty", "$items.price"] } } },
+    { $sort: { lineTotal: -1 } },
+    { $limit: 10 },
+  ],
+  m13: [
+    { $unwind: "$genres" },
+    { $group: { _id: "$genres", count: { $sum: 1 } } },
+    { $sort: { count: -1 } },
+  ],
+  m14: [
+    { $lookup: { from: "movies", localField: "_id", foreignField: "actorIds", as: "movies" } },
+    { $match: { movies: { $ne: [] } } },
+    { $unwind: "$movies" },
+    { $group: { _id: "$name", movies: { $sum: 1 }, avgRating: { $avg: "$movies.rating" } } },
+    { $sort: { movies: -1 } },
+    { $limit: 10 },
+  ],
+  m15: [
+    { $lookup: { from: "courses", localField: "courseIds", foreignField: "_id", as: "courses" } },
+    { $unwind: "$courses" },
+    { $lookup: { from: "teachers", localField: "courses.teacherId", foreignField: "_id", as: "teacher" } },
+    { $unwind: "$teacher" },
+    { $project: { _id: 0, student: "$name", course: "$courses.title", teacher: "$teacher.name", major: 1, gpa: 1 } },
+    { $sort: { student: 1, course: 1 } },
+    { $limit: 50 },
+  ],
+  m16: [
+    { $match: { status: "delivered" } },
+    { $unwind: "$items" },
+    { $lookup: { from: "products", localField: "items.productId", foreignField: "_id", as: "product" } },
+    { $unwind: "$product" },
+    { $lookup: { from: "categories", localField: "product.categoryId", foreignField: "_id", as: "category" } },
+    { $unwind: "$category" },
+    { $group: { _id: "$category.name", revenue: { $sum: { $multiply: ["$items.qty", "$items.price"] } } } },
+    { $sort: { revenue: -1 } },
+  ],
+  m17: [
+    { $match: { status: "active" } },
+    { $lookup: { from: "departments", localField: "departmentId", foreignField: "_id", as: "department" } },
+    { $unwind: "$department" },
+    { $group: { _id: "$department.name", employees: { $sum: 1 }, avgSalary: { $avg: "$salary" } } },
+    { $sort: { avgSalary: -1 } },
+  ],
+  m18: [
+    { $match: { type: "withdraw", status: "settled" } },
+    { $group: { _id: "$merchant", totalWithdrawn: { $sum: "$amount" }, count: { $sum: 1 } } },
+    { $sort: { totalWithdrawn: -1 } },
+    { $limit: 10 },
+  ],
+  m19: [
+    { $sort: { sales: -1 } },
+    { $limit: 10 },
+    { $lookup: { from: "authors", localField: "authorId", foreignField: "_id", as: "author" } },
+    { $unwind: "$author" },
+    { $project: { _id: 0, title: 1, sales: 1, rating: 1, price: 1, author: "$author.name" } },
+  ],
+  m20: [
+    { $lookup: { from: "likes", let: { postId: "$_id" }, pipeline: [{ $match: { $expr: { $eq: ["$postId", "$$postId"] } } }, { $count: "likes" }], as: "likes" } },
+    { $lookup: { from: "comments", let: { postId: "$_id" }, pipeline: [{ $match: { $expr: { $eq: ["$postId", "$$postId"] } } }, { $count: "comments" }], as: "comments" } },
+    { $addFields: { likes: { $ifNull: [{ $first: "$likes.likes" }, 0] }, comments: { $ifNull: [{ $first: "$comments.comments" }, 0] } } },
+    { $addFields: { engagement: { $add: ["$likes", { $multiply: ["$comments", 2] }] } } },
+    { $sort: { engagement: -1 } },
+    { $limit: 10 },
+    { $project: { _id: 0, content: 1, likes: 1, comments: 1, engagement: 1 } },
+  ],
+  m21: [
+    { $match: { status: "completed" } },
+    { $lookup: { from: "hospitals", localField: "hospitalId", foreignField: "_id", as: "hospital" } },
+    { $unwind: "$hospital" },
+    { $group: { _id: "$hospital.name", appointments: { $sum: 1 }, avgCost: { $avg: "$cost" } } },
+    { $sort: { avgCost: -1 } },
+  ],
+  m22: [
+    { $lookup: { from: "orders", let: { uid: "$_id" }, pipeline: [{ $match: { $expr: { $eq: ["$userId", "$$uid"] } } }, { $project: { total: 1 } }], as: "orders" } },
+    { $lookup: { from: "reviews", let: { uid: "$_id" }, pipeline: [{ $match: { $expr: { $eq: ["$userId", "$$uid"] } } }, { $count: "reviews" }], as: "reviews" } },
+    { $addFields: { orders: { $size: "$orders" }, totalSpent: { $sum: "$orders.total" }, reviews: { $ifNull: [{ $first: "$reviews.reviews" }, 0] } } },
+    { $addFields: { avgOrder: { $cond: [{ $gt: ["$orders", 0] }, { $divide: ["$totalSpent", "$orders"] }, 0] } } },
+    { $sort: { totalSpent: -1 } },
+    { $limit: 10 },
+    { $project: { _id: 0, name: 1, orders: 1, totalSpent: 1, avgOrder: 1, reviews: 1 } },
+  ],
+  m23: [
+    { $lookup: { from: "reviews", localField: "_id", foreignField: "productId", as: "reviews" } },
+    { $match: { $expr: { $gte: [{ $size: "$reviews" }, 5] } } },
+    { $addFields: { avgRating: { $avg: "$reviews.rating" }, reviewCount: { $size: "$reviews" } } },
+    { $sort: { reviewCount: -1 } },
+    { $limit: 10 },
+    { $project: { _id: 0, name: 1, avgRating: 1, reviewCount: 1 } },
+  ],
+  m24: [
+    { $group: { _id: { $dateToString: { format: "%Y-%m", date: "$createdAt" } }, revenue: { $sum: "$total" } } },
+    { $sort: { _id: 1 } },
+    { $setWindowFields: { sortBy: { _id: 1 }, output: { cumulativeRevenue: { $sum: "$revenue" } } } },
+    { $project: { _id: 0, month: "$_id", revenue: 1, cumulativeRevenue: 1 } },
+  ],
+  m25: [
+    { $match: { votes: { $gte: 5000 } } },
+    { $setWindowFields: { partitionBy: "$year", sortBy: { rating: -1 }, output: { rank: { $rank: {} } } } },
+    { $match: { rank: { $lte: 3 } } },
+    { $sort: { year: 1, rank: 1 } },
+    { $project: { _id: 0, title: 1, year: 1, rating: 1, votes: 1, rank: 1 } },
+  ],
+  m26: [
+    { $facet: {
+        totalRevenue: [{ $group: { _id: null, total: { $sum: "$total" } } }, { $project: { _id: 0, total: 1 } }],
+        ordersByStatus: [{ $group: { _id: "$status", count: { $sum: 1 } } }, { $sort: { count: -1 } }],
+        ordersByPayment: [{ $group: { _id: "$paymentMethod", count: { $sum: 1 } } }, { $sort: { count: -1 } }],
+      } },
+  ],
+  m27: [
+    { $graphLookup: { from: "followers", startWith: "$_id", connectFromField: "followsId", connectToField: "userId", as: "reach", maxDepth: 2 } },
+    { $addFields: { reach: { $size: "$reach" } } },
+    { $sort: { reach: -1, name: 1 } },
+    { $limit: 5 },
+    { $project: { _id: 0, name: 1, reach: 1 } },
+  ],
+  m28: [
+    { $match: { status: "delivered" } },
+    { $unwind: "$items" },
+    { $lookup: { from: "products", localField: "items.productId", foreignField: "_id", as: "product" } },
+    { $unwind: "$product" },
+    { $lookup: { from: "categories", localField: "product.categoryId", foreignField: "_id", as: "category" } },
+    { $unwind: "$category" },
+    { $group: { _id: { categoryId: "$category._id", productId: "$items.productId" }, category: { $first: "$category.name" }, product: { $first: "$product.name" }, revenue: { $sum: { $multiply: ["$items.qty", "$items.price"] } } } },
+    { $setWindowFields: { partitionBy: "$_id.categoryId", sortBy: { revenue: -1 }, output: { rank: { $rank: {} } } } },
+    { $match: { rank: { $lte: 3 } } },
+    { $sort: { "_id.categoryId": 1, rank: 1 } },
+    { $project: { _id: 0, category: 1, product: 1, revenue: 1, rank: 1 } },
+  ],
+};
+
+export function getReferencePipeline(id) {
+  return REFERENCE_PIPELINES[id] || [];
+}
