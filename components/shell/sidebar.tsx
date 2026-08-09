@@ -11,9 +11,12 @@ import {
   TrendingUp,
   Sparkles,
   Trophy,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react";
 import { LEVELS, MISSIONS, MISSION_MAP } from "@/lib/challenges/data";
 import { useProgress } from "@/lib/stores/progress";
+import { useUi } from "@/lib/stores/ui";
 import { DIFFICULTIES } from "@/lib/xp";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -32,6 +35,8 @@ function orderedMissionIds(): string[] {
 export function Sidebar({ activeId }: { activeId?: string | null }) {
   const router = useRouter();
   const completed = useProgress((s) => s.state.completed);
+  const collapsed = useUi((s) => s.missionSidebarCollapsed);
+  const toggleCollapse = useUi((s) => s.toggleMissionSidebar);
   const [openLevels, setOpenLevels] = useState<Record<string, boolean>>({
     l1: true,
   });
@@ -54,13 +59,36 @@ export function Sidebar({ activeId }: { activeId?: string | null }) {
     0
   );
 
+  if (collapsed) {
+    return (
+      <div className="flex w-10 shrink-0 flex-col items-center border-r border-border bg-card/40">
+        <button
+          onClick={toggleCollapse}
+          title="Expand missions sidebar"
+          aria-label="Expand missions sidebar"
+          className="flex h-9 w-10 items-center justify-center text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        >
+          <PanelLeftOpen className="h-4 w-4" />
+        </button>
+      </div>
+    );
+  }
+
   return (
     <aside className="flex w-64 shrink-0 flex-col border-r border-border bg-card/40">
-      <div className="flex h-12 items-center justify-between border-b border-border px-3">
+      <div className="flex h-12 items-center gap-2 border-b border-border px-3">
         <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Missions
         </span>
-        <span className="text-xs text-muted-foreground">
+        <button
+          onClick={toggleCollapse}
+          title="Collapse missions sidebar"
+          aria-label="Collapse missions sidebar"
+          className="ml-auto rounded p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        >
+          <PanelLeftClose className="h-4 w-4" />
+        </button>
+        <span className="whitespace-nowrap text-xs text-muted-foreground">
           {Object.keys(completed).length}/{MISSIONS.length} · {earnedXp}/{totalXp} XP
         </span>
       </div>

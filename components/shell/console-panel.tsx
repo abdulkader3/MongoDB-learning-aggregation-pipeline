@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { Terminal, ChevronDown, ChevronUp, Trash2, Play } from "lucide-react";
 import { useConsole } from "@/lib/stores/console";
+import { useUi } from "@/lib/stores/ui";
 import { cn } from "@/lib/utils";
 import { formatTime } from "@/lib/format";
 
@@ -27,23 +28,30 @@ const LEVEL_TAG: Record<string, string> = {
 export function ConsolePanel() {
   const entries = useConsole((s) => s.entries);
   const clear = useConsole((s) => s.clear);
-  const [open, setOpen] = useState(true);
+  const collapsed = useUi((s) => s.consoleCollapsed);
+  const toggle = useUi((s) => s.toggleConsole);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (open && scrollRef.current) {
+    if (!collapsed && scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [entries, open]);
+  }, [entries, collapsed]);
 
   return (
-    <div className="flex h-40 shrink-0 flex-col border-t border-border bg-card/50">
+    <div
+      className={cn(
+        "flex shrink-0 flex-col border-t border-border bg-card/50",
+        collapsed ? "h-8" : "h-40"
+      )}
+    >
       <div className="flex h-8 shrink-0 items-center gap-2 border-b border-border px-3">
         <button
-          onClick={() => setOpen((o) => !o)}
+          onClick={toggle}
           className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
+          title={collapsed ? "Expand console" : "Collapse console"}
         >
-          {open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronUp className="h-3.5 w-3.5" />}
+          {collapsed ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronUp className="h-3.5 w-3.5" />}
           <Terminal className="h-3.5 w-3.5" />
           Console
         </button>
@@ -61,7 +69,7 @@ export function ConsolePanel() {
         </div>
       </div>
 
-      {open && (
+      {!collapsed && (
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-3 py-1 font-mono text-xs">
           {entries.length === 0 ? (
             <p className="py-2 text-muted-foreground/60">

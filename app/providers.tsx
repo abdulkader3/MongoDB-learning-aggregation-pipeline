@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Toaster } from "sonner";
 import { useProgress } from "@/lib/stores/progress";
 import { useEditor } from "@/lib/stores/editor";
+import { useUi } from "@/lib/stores/ui";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -23,6 +24,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     void useProgress.persist.rehydrate();
     void useEditor.persist.rehydrate();
+    void useUi.persist.rehydrate();
   }, []);
 
   return (

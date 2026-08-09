@@ -80,8 +80,8 @@ export function LearnWorkspace({ missionId }: { missionId: string }) {
           nextId={nextId}
           onNav={(id) => router.push(`/learn?m=${id}`)}
         />
-        <div className="grid min-h-0 flex-1 grid-cols-[300px_minmax(0,1fr)_minmax(360px,1.4fr)]">
-          <div className="min-h-0 border-r border-border bg-card/30">
+        <div className="grid min-h-0 flex-1 grid-cols-[minmax(260px,0.85fr)_minmax(0,1fr)_minmax(340px,1.2fr)]">
+          <div className="min-h-0 min-w-0 border-r border-border bg-card/30">
             <MissionBrief mission={mission} />
           </div>
 
