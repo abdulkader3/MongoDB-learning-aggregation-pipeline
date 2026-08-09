@@ -6,6 +6,9 @@ import { Toaster } from "sonner";
 import { useProgress } from "@/lib/stores/progress";
 import { useEditor } from "@/lib/stores/editor";
 import { useUi } from "@/lib/stores/ui";
+import { useProfile } from "@/lib/stores/profile";
+import { usePreferences } from "@/lib/stores/preferences";
+import { AppShellLoading } from "@/components/shell/app-shell-loading";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -21,15 +24,27 @@ export function Providers({ children }: { children: React.ReactNode }) {
       }),
   );
 
+  const [hydrated, setHydrated] = useState(false);
+
   useEffect(() => {
-    void useProgress.persist.rehydrate();
-    void useEditor.persist.rehydrate();
-    void useUi.persist.rehydrate();
+    let cancelled = false;
+    void Promise.allSettled([
+      useProgress.persist.rehydrate(),
+      useEditor.persist.rehydrate(),
+      useUi.persist.rehydrate(),
+      useProfile.persist.rehydrate(),
+      usePreferences.persist.rehydrate(),
+    ]).then(() => {
+      if (!cancelled) setHydrated(true);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
-      {children}
+      {hydrated ? children : <AppShellLoading />}
       <Toaster
         theme="dark"
         position="bottom-right"

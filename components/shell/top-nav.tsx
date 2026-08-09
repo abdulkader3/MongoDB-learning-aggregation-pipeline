@@ -1,12 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Database, BookOpen, FlaskConical, CalendarDays, Trophy, RotateCcw } from "lucide-react";
+import { Database, BookOpen, FlaskConical, CalendarDays, Trophy, RotateCcw, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useHealth } from "@/lib/use-health";
 import { HealthIndicator } from "@/components/health-indicator";
 import { useProgress } from "@/lib/stores/progress";
+import { SettingsDialog } from "@/components/shell/settings-dialog";
 import { levelFromXp } from "@/lib/xp";
 import {
   Tooltip,
@@ -28,6 +30,7 @@ export function TopNav() {
   const state = useProgress((s) => s.state);
   const reset = useProgress((s) => s.reset);
   const { level, remaining, next } = levelFromXp(state.totalXp);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   return (
     <header className="flex h-12 shrink-0 items-center gap-3 border-b border-border bg-card/60 px-3">
@@ -94,7 +97,22 @@ export function TopNav() {
           </TooltipTrigger>
           <TooltipContent>Reset progress</TooltipContent>
         </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={() => setSettingsOpen(true)}
+              className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              aria-label="Settings"
+            >
+              <Settings className="h-4 w-4" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>Settings</TooltipContent>
+        </Tooltip>
       </div>
+
+      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
     </header>
   );
 }

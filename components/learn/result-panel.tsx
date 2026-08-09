@@ -7,6 +7,7 @@ import { JsonView } from "@/components/json-view";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { usePreferences, type ResultDocumentType } from "@/lib/stores/preferences";
 import { formatMs, formatBytes } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -64,6 +65,9 @@ export function ResultPanel({
   result: ExecutionResult | null;
   validation: ValidationReport | null;
 }) {
+  const docType = usePreferences((s) => s.preferences.resultDocumentType);
+  const setDocType = usePreferences((s) => s.setResultDocumentType);
+
   if (!result || !validation) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-2 p-8 text-center">
@@ -105,7 +109,11 @@ export function ResultPanel({
         )}
       </div>
 
-      <Tabs defaultValue="docs" className="flex min-h-0 flex-1 flex-col">
+      <Tabs
+        value={docType}
+        onValueChange={(v) => setDocType(v as ResultDocumentType)}
+        className="flex min-h-0 flex-1 flex-col"
+      >
         <div className="shrink-0 px-3 pt-2">
           <TabsList className="h-8">
             <TabsTrigger value="docs" className="text-xs">Documents ({result.count})</TabsTrigger>
