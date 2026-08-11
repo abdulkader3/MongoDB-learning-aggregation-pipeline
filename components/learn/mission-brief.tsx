@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import { useUi } from "@/lib/stores/ui";
 
 function Section({
   icon,
@@ -30,16 +31,18 @@ function Section({
 }
 
 export function MissionBrief({ mission }: { mission: Mission }) {
+  const collapsed = useUi((s) => s.missionSidebarCollapsed);
+  const body = collapsed ? "text-sm" : "text-xs";
   return (
     <div className="h-full">
       <ScrollArea className="h-full">
         <div className="space-y-5 p-4">
           <div>
-            <p className="text-sm leading-relaxed text-foreground">{mission.description}</p>
+            <p className={cn("leading-relaxed text-foreground", collapsed ? "text-base" : "text-sm")}>{mission.description}</p>
           </div>
 
           <Section icon={<BookOpen className="h-3.5 w-3.5" />} title="Scenario">
-            <p className="text-xs leading-relaxed text-muted-foreground">{mission.scenario}</p>
+            <p className={cn("leading-relaxed text-muted-foreground", body)}>{mission.scenario}</p>
           </Section>
 
           <Separator />
@@ -47,7 +50,7 @@ export function MissionBrief({ mission }: { mission: Mission }) {
           <Section icon={<ListChecks className="h-3.5 w-3.5" />} title="Requirements">
             <ul className="space-y-1.5">
               {mission.requirements.map((r, i) => (
-                <li key={i} className="flex gap-2 text-xs text-muted-foreground">
+                <li key={i} className={cn("flex gap-2 text-muted-foreground", body)}>
                   <span className="mt-0.5 h-1 w-1 shrink-0 rounded-full bg-info" />
                   {r}
                 </li>
@@ -58,7 +61,7 @@ export function MissionBrief({ mission }: { mission: Mission }) {
           <Section icon={<Target className="h-3.5 w-3.5" />} title="Objectives">
             <ul className="space-y-1.5">
               {mission.objectives.map((o, i) => (
-                <li key={i} className="flex gap-2 text-xs text-muted-foreground">
+                <li key={i} className={cn("flex gap-2 text-muted-foreground", body)}>
                   <span className="mt-0.5 h-1 w-1 shrink-0 rounded-full bg-primary" />
                   {o}
                 </li>
@@ -70,7 +73,7 @@ export function MissionBrief({ mission }: { mission: Mission }) {
             <Section icon={<XCircle className="h-3.5 w-3.5" />} title="Restrictions">
               <ul className="space-y-1.5">
                 {mission.restrictions.map((r, i) => (
-                  <li key={i} className="flex gap-2 text-xs text-destructive/90">
+                  <li key={i} className={cn("flex gap-2 text-destructive/90", body)}>
                     <span className="mt-0.5 h-1 w-1 shrink-0 rounded-full bg-destructive" />
                     {r}
                   </li>
@@ -114,7 +117,7 @@ export function MissionBrief({ mission }: { mission: Mission }) {
           <Section icon={<AlertTriangle className="h-3.5 w-3.5" />} title="Common mistakes">
             <ul className="space-y-1.5">
               {mission.commonMistakes.map((m, i) => (
-                <li key={i} className="flex gap-2 text-xs text-muted-foreground">
+                <li key={i} className={cn("flex gap-2 text-muted-foreground", body)}>
                   <span className="mt-0.5 h-1 w-1 shrink-0 rounded-full bg-warning" />
                   {m}
                 </li>
