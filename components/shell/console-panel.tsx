@@ -38,6 +38,17 @@ export function ConsolePanel() {
     }
   }, [entries, collapsed]);
 
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (!(e.ctrlKey || e.metaKey) || e.shiftKey || e.altKey) return;
+      if (e.code !== "KeyJ") return;
+      e.preventDefault();
+      toggle();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [toggle]);
+
   return (
     <div
       className={cn(

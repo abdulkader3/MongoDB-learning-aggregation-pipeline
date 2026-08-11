@@ -4,7 +4,6 @@ import { useCallback, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { Play, Braces, AlertCircle, Eye, ListChecks, CircleCheck } from "lucide-react";
 import { useEditor, parsePipelineJson, stageNames } from "@/lib/stores/editor";
-import { useUi } from "@/lib/stores/ui";
 import { DEFAULT_PIPELINE_TEXT } from "@/lib/config";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -29,7 +28,6 @@ export function PipelineEditor({
   const key = storageKey ?? mission.id;
   const text = useEditor((s) => s.textFor(key)) || DEFAULT_PIPELINE_TEXT;
   const setText = useEditor((s) => s.setText);
-  const toggleConsole = useUi((s) => s.toggleConsole);
 
   const parsed = useMemo(() => parsePipelineJson(text), [text]);
   const names = parsed.ok ? stageNames(parsed.pipeline) : [];
@@ -108,9 +106,6 @@ export function PipelineEditor({
           theme="vs-dark"
           value={text}
           onChange={(v) => setText(key, v ?? "")}
-          onMount={(editor, monaco) => {
-            editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyJ, () => toggleConsole());
-          }}
           options={{
             minimap: { enabled: false },
             fontSize: 13,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Lock } from "lucide-react";
 import { MISSION_MAP, LEVELS } from "@/lib/challenges/data";
@@ -31,6 +31,44 @@ export function LearnWorkspace({ missionId }: { missionId: string }) {
   const completed = useProgress((s) => s.state.completed);
   const { running, outcome, run, reset } = useMissionRun(missionId);
   const [tab, setTab] = useState("pipeline");
+
+  const gridRef = useRef<HTMLDivElement>(null);
+  const middleRef = useRef<HTMLDivElement>(null);
+  const briefRef = useRef<HTMLDivElement>(null);
+  const defaultPipelineWidthRef = useRef<number | null>(null);
+  const [briefWidth, setBriefWidth] = useState<number | null>(null);
+  const [pipelineWidth, setPipelineWidth] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (defaultPipelineWidthRef.current === null && middleRef.current) {
+      defaultPipelineWidthRef.current = middleRef.current.offsetWidth;
+    }
+    if (briefWidth === null && briefRef.current) {
+      setBriefWidth(briefRef.current.offsetWidth);
+    }
+  }, [briefWidth]);
+
+  const onResizeStart = (e: ReactPointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const startWidth = middleRef.current?.offsetWidth ?? 0;
+    const containerWidth = gridRef.current?.clientWidth ?? startWidth;
+    const min = defaultPipelineWidthRef.current ?? startWidth;
+    const max = Math.max(min, containerWidth - (briefWidth ?? 260) - 340);
+    const startX = e.clientX;
+    const onMove = (ev: globalThis.PointerEvent) => {
+      const next = startWidth + (ev.clientX - startX);
+      setPipelineWidth(Math.min(Math.max(next, min), max));
+    };
+    const onUp = () => {
+      document.body.style.cursor = "";
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+    document.body.style.cursor = "col-resize";
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  };
+
 
   const ordered = useMemo(() => orderedMissionIds(), []);
   const idx = ordered.indexOf(missionId);
@@ -118,12 +156,28 @@ export function LearnWorkspace({ missionId }: { missionId: string }) {
           nextId={nextId}
           onNav={(id) => router.push(`/learn?m=${id}`)}
         />
-        <div className="grid min-h-0 flex-1 grid-cols-[minmax(260px,0.85fr)_minmax(0,1fr)_minmax(340px,1.2fr)]">
-          <div className="min-h-0 min-w-0 border-r border-border bg-card/30">
+        <div
+          ref={gridRef}
+          className="grid min-h-0 flex-1"
+          style={{
+            gridTemplateColumns:
+              briefWidth === null
+                ? "minmax(260px,0.85fr) minmax(0,1fr) minmax(340px,1.2fr)"
+                : pipelineWidth === null
+                  ? `${briefWidth}px minmax(0,1fr) minmax(340px,1.2fr)`
+                  : `${briefWidth}px ${pipelineWidth}px minmax(340px,1fr)`,
+          }}
+        >
+          <div ref={briefRef} className="min-h-0 min-w-0 border-r border-border bg-card/30">
             <MissionBrief mission={mission} />
           </div>
 
-          <div className="flex min-h-0 min-w-0 flex-col">
+          <div ref={middleRef} className="relative flex min-h-0 min-w-0 flex-col">
+            <div
+              onPointerDown={onResizeStart}
+              aria-hidden
+              className="absolute inset-y-0 -right-1 z-10 w-2 cursor-col-resize touch-none select-none border-r border-transparent transition-colors hover:border-primary/40 active:border-primary"
+            />
             <Tabs value={tab} onValueChange={setTab} className="flex min-h-0 min-w-0 flex-1 flex-col">
               <div className="shrink-0 border-b border-border px-3 py-1.5">
                 <TabsList className="h-8">
