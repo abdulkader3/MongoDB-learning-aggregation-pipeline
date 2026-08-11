@@ -9,4 +9,4 @@ export const API_BASE_URL: string =
 
 export const SEED = 20260803;
 
-export const DEFAULT_PIPELINE_TEXT = "[\n  // {\n  //   $match: {},\n  // },\n  // {\n  //   $project: { _id: 0 },\n  // },\n]";
+export const DEFAULT_PIPELINE_TEXT = "[\n  // {\n  //   \"$match\": {},\n  // },\n  // {\n  //   \"$project\": { \"_id\": 0 },\n  // },\n]";
