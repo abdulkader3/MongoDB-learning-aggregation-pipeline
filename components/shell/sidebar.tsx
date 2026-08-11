@@ -78,15 +78,47 @@ export function Sidebar({ activeId }: { activeId?: string | null }) {
 
   if (collapsed) {
     return (
-      <div className="flex w-10 shrink-0 flex-col items-center border-r border-border bg-card/40">
+      <div className="flex w-10 shrink-0 flex-col items-stretch border-r border-border bg-card/40">
         <button
           onClick={toggleCollapse}
           title="Expand missions sidebar (Shift+X)"
           aria-label="Expand missions sidebar"
-          className="flex h-9 w-10 items-center justify-center text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          className="flex h-9 w-10 shrink-0 items-center justify-center text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
         >
           <PanelLeftOpen className="h-4 w-4" />
         </button>
+        <ScrollArea className="flex-1">
+          <div className="flex flex-col items-center gap-1 py-2">
+            {ordered.map((id, i) => {
+              const num = i + 1;
+              const mission = MISSION_MAP[id];
+              const done = Boolean(completed[id]);
+              const locked = !isUnlocked(id);
+              const active = activeId === id;
+              return (
+                <button
+                  key={id}
+                  disabled={locked}
+                  onClick={() => router.push(`/learn?m=${id}`)}
+                  title={`${num}. ${mission.title}`}
+                  aria-label={`${num}. ${mission.title}`}
+                  className={cn(
+                    "flex h-6 w-6 items-center justify-center rounded-md font-mono text-[11px] transition-colors",
+                    active
+                      ? "bg-primary font-semibold text-primary-foreground shadow-[0_0_12px_-2px_rgba(0,237,100,0.6)]"
+                      : done
+                        ? "text-success"
+                        : locked
+                          ? "cursor-not-allowed text-muted-foreground/40"
+                          : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                  )}
+                >
+                  {num}
+                </button>
+              );
+            })}
+          </div>
+        </ScrollArea>
       </div>
     );
   }
