@@ -49,7 +49,7 @@ export function ConsolePanel() {
         <button
           onClick={toggle}
           className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
-          title={collapsed ? "Expand console" : "Collapse console"}
+          title={collapsed ? "Expand console (Ctrl+J)" : "Collapse console (Ctrl+J)"}
         >
           {collapsed ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronUp className="h-3.5 w-3.5" />}
           <Terminal className="h-3.5 w-3.5" />

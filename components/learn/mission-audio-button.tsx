@@ -32,6 +32,61 @@ export function MissionAudioButton({ src }: { src: string }) {
     void el.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
   };
 
+  const toggleRef = useRef(toggle);
+  useEffect(() => {
+    toggleRef.current = toggle;
+  });
+
+  const restartRef = useRef(restart);
+  useEffect(() => {
+    restartRef.current = restart;
+  });
+
+  useEffect(() => {
+    let tabHeld = false;
+    const isEditable = (target: EventTarget | null) => {
+      const el = target as HTMLElement | null;
+      return (
+        el?.tagName === "INPUT" ||
+        el?.tagName === "TEXTAREA" ||
+        Boolean(el?.isContentEditable)
+      );
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (!e.shiftKey && !e.metaKey && (e.key === "Control" || e.key === "Alt")) {
+        const combo = e.key === "Control" ? e.altKey : e.ctrlKey;
+        if (combo) {
+          if (e.repeat) return;
+          e.preventDefault();
+          toggleRef.current();
+          return;
+        }
+      }
+      if (e.code === "Tab") {
+        tabHeld = true;
+        return;
+      }
+      if (e.code === "KeyR" && tabHeld && !isEditable(e.target)) {
+        e.preventDefault();
+        restartRef.current();
+      }
+    };
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.code === "Tab") tabHeld = false;
+    };
+    const onBlur = () => {
+      tabHeld = false;
+    };
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
+    window.addEventListener("blur", onBlur);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+      window.removeEventListener("blur", onBlur);
+    };
+  }, []);
+
   return (
     <>
       <audio
@@ -47,7 +102,7 @@ export function MissionAudioButton({ src }: { src: string }) {
         size="icon-sm"
         onClick={toggle}
         aria-label={playing ? "Pause mission audio" : "Play mission audio"}
-        title={playing ? "Pause audio" : "Play audio"}
+        title={playing ? "Pause audio (Ctrl+Alt)" : "Play audio (Ctrl+Alt)"}
       >
         {playing ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
       </Button>
@@ -56,7 +111,7 @@ export function MissionAudioButton({ src }: { src: string }) {
         size="icon-sm"
         onClick={restart}
         aria-label="Restart mission audio"
-        title="Restart audio"
+        title="Restart audio (Tab R)"
       >
         <RotateCcw className="h-3.5 w-3.5" />
       </Button>

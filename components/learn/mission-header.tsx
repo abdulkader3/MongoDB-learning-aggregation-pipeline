@@ -55,10 +55,10 @@ export function MissionHeader({
         {mission.audio && <MissionAudioButton src={mission.audio} />}
         <DifficultyBadge difficulty={mission.difficulty} xp />
         <div className="flex items-center gap-0.5">
-          <Button size="icon-sm" variant="ghost" disabled={!prevId || !onNav} onClick={() => prevId && onNav?.(prevId)}>
+          <Button size="icon-sm" variant="ghost" disabled={!prevId || !onNav} onClick={() => prevId && onNav?.(prevId)} title="Previous mission (Shift+.)">
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <Button size="icon-sm" variant="ghost" disabled={!nextId || !onNav} onClick={() => nextId && onNav?.(nextId)}>
+          <Button size="icon-sm" variant="ghost" disabled={!nextId || !onNav} onClick={() => nextId && onNav?.(nextId)} title="Next mission (Shift+/)">
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>

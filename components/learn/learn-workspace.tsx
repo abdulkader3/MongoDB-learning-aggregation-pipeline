@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Lock } from "lucide-react";
 import { MISSION_MAP, LEVELS } from "@/lib/challenges/data";
+import { DEFAULT_PIPELINE_TEXT } from "@/lib/config";
 import { useProgress } from "@/lib/stores/progress";
 import { useEditor } from "@/lib/stores/editor";
 import { useMissionRun } from "@/lib/use-mission-run";
@@ -39,8 +40,41 @@ export function LearnWorkspace({ missionId }: { missionId: string }) {
   const nextId = idx < ordered.length - 1 ? ordered[idx + 1] : undefined;
 
   const text = useEditor((s) => s.textFor(missionId));
+  const setText = useEditor((s) => s.setText);
   const parsed = useMemo(() => parsePipelineJson(text), [text]);
   const sourceCount = getCollectionPageCached(mission.collections[0], 0, 1).total;
+
+  const prevMissionIdRef = useRef(missionId);
+  useEffect(() => {
+    if (prevMissionIdRef.current !== missionId) {
+      prevMissionIdRef.current = missionId;
+      reset();
+      setText(missionId, DEFAULT_PIPELINE_TEXT);
+    }
+  }, [missionId, reset, setText]);
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (!e.shiftKey || e.ctrlKey || e.metaKey || e.altKey) return;
+      const target = e.target as HTMLElement | null;
+      const editable =
+        target?.tagName === "INPUT" ||
+        target?.tagName === "TEXTAREA" ||
+        Boolean(target?.isContentEditable);
+      if (editable) return;
+      if (e.code === "Slash") {
+        if (!nextId) return;
+        e.preventDefault();
+        router.push(`/learn?m=${nextId}`);
+      } else if (e.code === "Period") {
+        if (!prevId) return;
+        e.preventDefault();
+        router.push(`/learn?m=${prevId}`);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [nextId, prevId, router]);
 
   if (!mission) {
     return (

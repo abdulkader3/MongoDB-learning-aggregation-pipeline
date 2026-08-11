@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ChevronRight,
@@ -41,6 +41,23 @@ export function Sidebar({ activeId }: { activeId?: string | null }) {
     l1: true,
   });
 
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey && e.code === "KeyX") {
+        const target = e.target as HTMLElement | null;
+        const editable =
+          target?.tagName === "INPUT" ||
+          target?.tagName === "TEXTAREA" ||
+          Boolean(target?.isContentEditable);
+        if (editable) return;
+        e.preventDefault();
+        toggleCollapse();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [toggleCollapse]);
+
   const ordered = orderedMissionIds();
   const unlockedIndex = ordered.findIndex((id) => !completed[id]);
   const unlockedUntil = unlockedIndex === -1 ? ordered.length : unlockedIndex;
@@ -64,7 +81,7 @@ export function Sidebar({ activeId }: { activeId?: string | null }) {
       <div className="flex w-10 shrink-0 flex-col items-center border-r border-border bg-card/40">
         <button
           onClick={toggleCollapse}
-          title="Expand missions sidebar"
+          title="Expand missions sidebar (Shift+X)"
           aria-label="Expand missions sidebar"
           className="flex h-9 w-10 items-center justify-center text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
         >
@@ -82,7 +99,7 @@ export function Sidebar({ activeId }: { activeId?: string | null }) {
         </span>
         <button
           onClick={toggleCollapse}
-          title="Collapse missions sidebar"
+          title="Collapse missions sidebar (Shift+X)"
           aria-label="Collapse missions sidebar"
           className="ml-auto rounded p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
         >
