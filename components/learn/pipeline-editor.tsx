@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo } from "react";
 import dynamic from "next/dynamic";
-import { Play, Braces, AlertCircle, Eye, ListChecks } from "lucide-react";
+import { Play, Braces, AlertCircle, Eye, ListChecks, CircleCheck } from "lucide-react";
 import { useEditor, parsePipelineJson, stageNames } from "@/lib/stores/editor";
 import { useUi } from "@/lib/stores/ui";
 import { DEFAULT_PIPELINE_TEXT } from "@/lib/config";
@@ -90,6 +90,16 @@ export function PipelineEditor({
           </Button>
         </div>
       </div>
+
+      {solved && (
+        <div className="flex shrink-0 items-center gap-2 border-b border-success/40 bg-success/10 px-3 py-2">
+          <CircleCheck className="h-5 w-5 shrink-0 text-success" />
+          <span className="text-base font-semibold text-success">
+            This mission is already completed you can play it again. Simply write the code
+            again and it will be the same.
+          </span>
+        </div>
+      )}
 
       <div className="min-h-0 flex-1">
         <MonacoEditor

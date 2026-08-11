@@ -45,13 +45,17 @@ export function LearnWorkspace({ missionId }: { missionId: string }) {
   const sourceCount = getCollectionPageCached(mission.collections[0], 0, 1).total;
 
   const prevMissionIdRef = useRef(missionId);
+  const isFirstRunRef = useRef(true);
   useEffect(() => {
-    if (prevMissionIdRef.current !== missionId) {
-      prevMissionIdRef.current = missionId;
-      reset();
+    const arriving = prevMissionIdRef.current !== missionId;
+    if (!arriving && !isFirstRunRef.current) return;
+    isFirstRunRef.current = false;
+    prevMissionIdRef.current = missionId;
+    reset();
+    if (arriving || completed[missionId]) {
       setText(missionId, DEFAULT_PIPELINE_TEXT);
     }
-  }, [missionId, reset, setText]);
+  }, [missionId, reset, setText, completed]);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
