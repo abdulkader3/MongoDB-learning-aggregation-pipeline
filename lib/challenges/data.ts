@@ -1,5 +1,6 @@
 import type { Achievement, Difficulty, Level, Mission, MissionType } from "@/lib/types";
 import { REFERENCE_PIPELINES } from "@/shared/reference.mjs";
+import { resolveMissionAudio } from "@/shared/mission-audio.mjs";
 
 const XP: Record<Difficulty, number> = {
   easy: 100,
@@ -28,6 +29,7 @@ function mission(
   return {
     id,
     title,
+    audio: resolveMissionAudio(id),
     difficulty,
     xp: opts.xp ?? XP[difficulty],
     estimatedMinutes,

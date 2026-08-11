@@ -35,6 +35,8 @@ export interface MissionHint {
 export interface Mission {
   id: string;
   title: string;
+  /** Optional public URL of a generated audio narration, e.g. "/audio/1-Warm Up.wav". */
+  audio?: string;
   difficulty: Difficulty;
   xp: number;
   estimatedMinutes: number;

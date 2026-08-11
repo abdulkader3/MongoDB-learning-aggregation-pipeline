@@ -5,6 +5,7 @@ import type { Mission } from "@/lib/types";
 import { useProgress } from "@/lib/stores/progress";
 import { Button } from "@/components/ui/button";
 import { DifficultyBadge } from "@/components/difficulty-badge";
+import { MissionAudioButton } from "@/components/learn/mission-audio-button";
 import { cn } from "@/lib/utils";
 
 export function MissionHeader({
@@ -51,6 +52,7 @@ export function MissionHeader({
       </div>
 
       <div className="ml-auto flex items-center gap-2">
+        {mission.audio && <MissionAudioButton src={mission.audio} />}
         <DifficultyBadge difficulty={mission.difficulty} xp />
         <div className="flex items-center gap-0.5">
           <Button size="icon-sm" variant="ghost" disabled={!prevId || !onNav} onClick={() => prevId && onNav?.(prevId)}>
