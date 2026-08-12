@@ -1,96 +1,19 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { parsePipeline, type ParseResult } from "@/lib/mongo/parse";
 
-export interface ParseResult {
-  ok: boolean;
-  pipeline: Record<string, unknown>[];
-  error?: string;
-  position?: number;
-}
+export type { ParseResult };
 
-/** Strips // and /* comments and trailing commas, then JSON.parse. */
+/**
+ * Parses the editor text into the internal pipeline representation.
+ *
+ * Accepts both strict JSON (`{ "$match": {} }`) and MongoDB-style unquoted
+ * keys (`{ $match: {} }`), along with comments, trailing commas and single
+ * quoted strings. The result is plain JS values, so the rest of the app
+ * (Mock Engine, validation, mission checks) is unchanged.
+ */
 export function parsePipelineJson(text: string): ParseResult {
-  let cleaned = "";
-  let inString = false;
-  let inLine = false;
-  let inBlock = false;
-  let i = 0;
-  let quote = "";
-
-  while (i < text.length) {
-    const c = text[i];
-    const next = text[i + 1];
-
-    if (inLine) {
-      if (c === "\n") {
-        inLine = false;
-        cleaned += c;
-      }
-      i += 1;
-      continue;
-    }
-    if (inBlock) {
-      if (c === "*" && next === "/") {
-        inBlock = false;
-        i += 2;
-        continue;
-      }
-      i += 1;
-      continue;
-    }
-    if (inString) {
-      cleaned += c;
-      if (c === "\\") {
-        cleaned += next ?? "";
-        i += 2;
-        continue;
-      }
-      if (c === quote) inString = false;
-      i += 1;
-      continue;
-    }
-    if (c === '"' || c === "'") {
-      inString = true;
-      quote = c;
-      cleaned += c;
-      i += 1;
-      continue;
-    }
-    if (c === "/" && next === "/") {
-      inLine = true;
-      i += 2;
-      continue;
-    }
-    if (c === "/" && next === "*") {
-      inBlock = true;
-      i += 2;
-      continue;
-    }
-    if (c === ",") {
-      // look ahead for a closing bracket/brace after whitespace
-      let j = i + 1;
-      while (j < text.length && /\s/.test(text[j])) j += 1;
-      const ahead = text[j];
-      if (ahead === "]" || ahead === "}") {
-        i += 1;
-        continue;
-      }
-    }
-    cleaned += c;
-    i += 1;
-  }
-
-  try {
-    const value = JSON.parse(cleaned);
-    if (!Array.isArray(value)) {
-      return { ok: false, pipeline: [], error: "Pipeline must be an array of stage objects." };
-    }
-    return { ok: true, pipeline: value as Record<string, unknown>[] };
-  } catch (err) {
-    const e = err as Error;
-    const pos = Number(/position (\d+)/.exec(e.message)?.[1] ?? 0);
-    return { ok: false, pipeline: [], error: e.message, position: pos };
-  }
+  return parsePipeline(text);
 }
 
 interface EditorState {

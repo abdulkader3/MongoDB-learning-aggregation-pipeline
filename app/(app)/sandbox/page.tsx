@@ -6,6 +6,7 @@ import { getCollections } from "@/lib/backend/client";
 import { runSandboxPipeline } from "@/lib/runner";
 import { useEditor, parsePipelineJson, stageNames } from "@/lib/stores/editor";
 import { DEFAULT_PIPELINE_TEXT } from "@/lib/config";
+import { MONGO_PIPELINE_LANGUAGE_ID, ensureMongoPipelineLanguage, validateMongoPipelineModel } from "@/lib/mongo/monaco";
 import { logInfo, logRequest, logError } from "@/lib/stores/console";
 import type { ExecutionResult } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -91,10 +92,21 @@ export default function SandboxPage() {
           <div className="min-h-0 flex-1">
             <MonacoEditor
               height="100%"
-              language="json"
+              language={MONGO_PIPELINE_LANGUAGE_ID}
               theme="vs-dark"
               value={text}
               onChange={(v) => setText("__sandbox__", v ?? "")}
+              beforeMount={(monaco) => ensureMongoPipelineLanguage(monaco)}
+              onMount={(editor, monaco) => {
+                const model = editor.getModel();
+                if (model) {
+                  validateMongoPipelineModel(monaco, model);
+                  const listener = model.onDidChangeContent(() =>
+                    validateMongoPipelineModel(monaco, model)
+                  );
+                  editor.onDidDispose(() => listener.dispose());
+                }
+              }}
               options={{
                 minimap: { enabled: false },
                 fontSize: 13,

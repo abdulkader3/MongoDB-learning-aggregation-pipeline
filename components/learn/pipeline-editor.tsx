@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { Play, Braces, AlertCircle, Eye, ListChecks, CircleCheck } from "lucide-react";
 import { useEditor, parsePipelineJson, stageNames } from "@/lib/stores/editor";
 import { DEFAULT_PIPELINE_TEXT } from "@/lib/config";
+import { MONGO_PIPELINE_LANGUAGE_ID, ensureMongoPipelineLanguage, validateMongoPipelineModel } from "@/lib/mongo/monaco";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -102,10 +103,21 @@ export function PipelineEditor({
       <div className="min-h-0 flex-1">
         <MonacoEditor
           height="100%"
-          language="json"
+          language={MONGO_PIPELINE_LANGUAGE_ID}
           theme="vs-dark"
           value={text}
           onChange={(v) => setText(key, v ?? "")}
+          beforeMount={(monaco) => ensureMongoPipelineLanguage(monaco)}
+          onMount={(editor, monaco) => {
+            const model = editor.getModel();
+            if (model) {
+              validateMongoPipelineModel(monaco, model);
+              const listener = model.onDidChangeContent(() =>
+                validateMongoPipelineModel(monaco, model)
+              );
+              editor.onDidDispose(() => listener.dispose());
+            }
+          }}
           options={{
             minimap: { enabled: false },
             fontSize: 13,
