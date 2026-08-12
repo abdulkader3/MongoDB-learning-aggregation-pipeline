@@ -74,8 +74,14 @@ export function ensureMongoPipelineLanguage(monaco: typeof Monaco): void {
       { open: '"', close: '"' },
       { open: "'", close: "'" },
     ],
+    // NOTE: `$` must NOT be a word character here. If `$` is part of a word,
+    // Monaco's suggest controller treats the trigger character as a "quick
+    // suggest" case and skips the triggerCharacter path (see SuggestModel's
+    // checkTriggerCharacter/shouldAutoTrigger), so typing `$` would never open
+    // the completion popup. Excluding `$` makes the `triggerCharacters: ["$"]`
+    // path fire immediately.
     wordPattern:
-      /(-?\d*\.\d\w*)|([^\`\~\!\@\#\%\^\&\*\(\)\-\=\+\[\{\]\}\\\|\;\:\'\"\,\.\<\>\/\?\s]+)/g,
+      /(-?\d*\.\d\w*)|([^\`\~\!\@\#\%\^\&\*\(\)\-\=\+\[\{\]\}\\\|\;\:\'\$\"\,\.\<\>\/\?\s]+)/g,
   });
 
   monaco.languages.setTokensProvider(MONGO_PIPELINE_LANGUAGE_ID, createTokensProvider());
@@ -144,6 +150,15 @@ function createCompletionProvider(
       const text = model.getValue();
       const offset = model.getOffsetAt(position);
       const ctx = getCompletionContext(text, offset);
+
+      // TEMP diagnostic for autocomplete debugging — remove after verification.
+      if (typeof window !== "undefined") {
+        console.log("[mongo-pipeline] completion triggered", {
+          kind: ctx.kind,
+          word: ctx.word,
+          available: OPERATORS_FOR_CONTEXT[ctx.kind].length,
+        });
+      }
 
       const ops = OPERATORS_FOR_CONTEXT[ctx.kind];
       if (ops.length === 0) {
