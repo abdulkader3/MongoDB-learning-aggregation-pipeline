@@ -118,7 +118,7 @@ function loadTs(rel) {
   return m.exports;
 }
 const { getCompletionContext } = loadTs("lib/mongo/parse.ts");
-const { MONGO_STAGES } = loadTs("lib/mongo/metadata.ts");
+const { MONGO_STAGES, MONGO_QUERY_OPERATORS, filterOperators } = loadTs("lib/mongo/metadata.ts");
 
 {
   const ctx = getCompletionContext("[{ $", 4);
@@ -129,6 +129,82 @@ const { MONGO_STAGES } = loadTs("lib/mongo/metadata.ts");
   const pro = MONGO_STAGES.filter((op) => op.name.toLowerCase().includes("pro"));
   check("$project exists with kind + description", pro.length > 0 && pro[0].description.length > 0, JSON.stringify(pro));
   check("stage count is 37", MONGO_STAGES.length === 37, String(MONGO_STAGES.length));
+}
+
+// --- New feature: trigger on stage names typed WITHOUT the `$` prefix --------
+// filterOperators already normalizes the prefix ($-agnostic) and splitWords
+// splits camelCase, so `mat` and `$mat` must both resolve to $match.
+
+{
+  const expectOnly = (prefix, name) => {
+    const got = filterOperators(MONGO_STAGES, prefix).map((op) => op.name);
+    check(`filterOperators("${prefix}") -> exactly [${name}]`, got.length === 1 && got[0] === name, got.join(", "));
+  };
+  expectOnly("mat", "$match");
+  expectOnly("$mat", "$match");
+  expectOnly("project", "$project");
+  const loo = filterOperators(MONGO_STAGES, "loo").map((op) => op.name);
+  check("filterOperators(\"loo\") -> $graphLookup + $lookup (documented shared prefix)",
+    loo.length === 2 && loo.includes("$graphLookup") && loo.includes("$lookup"), loo.join(", "));
+  expectOnly("group", "$group");
+  expectOnly("unwind", "$unwind");
+  expectOnly("limit", "$limit");
+  expectOnly("$group", "$group");
+  check("filterOperators('') returns ALL stages (popup on bare quick-suggest)",
+    filterOperators(MONGO_STAGES, "").length === MONGO_STAGES.length);
+  check("query operators also match without `$` (e.g. 'in')",
+    filterOperators(MONGO_QUERY_OPERATORS, "in").map((o) => o.name).includes("$in"));
+}
+
+// --- Quick-suggest gate: Monaco must actually open for word chars ------------
+// Word characters can only trigger via the quick-suggest path (suggestModel.js
+// `shouldAutoTrigger` is true, so the `triggerCharacters` path is skipped).
+// The gate is `quickSuggestions` vs the token's StandardTokenType. Stage keys
+// are tokenized as `string.key.json` -> StandardTokenType.String (verified in
+// monaco tokenization.js `toStandardTokenType`). That is why we must set
+// `quickSuggestions.strings: true` in the editors — the default `strings: 'off'`
+// would keep the popup hidden while typing `mat`.
+
+// Replays Monaco's SuggestModel._doTriggerQuickSuggest decision:
+//   String token + strings off  -> BLOCKED (the bug the option fixes)
+//   String token + strings on   -> opened
+{
+  const valueFor = (kind, config) =>
+    kind === 1 /* Comment */ ? config.comments
+    : kind === 2 /* String */ ? config.strings
+    : config.other;
+
+  const WORD_TOKEN = 0;  // Other
+  const STRING_TOKEN = 2; // String (string.key.json)
+  const stringKey = "\"$match\": 1, \"ma"; // key position inside an object
+
+  const configDefault = { other: "on", comments: "off", strings: "off" };
+  const configFixed = { other: "on", comments: "off", strings: "on" };
+
+  // Replay of monaco tokenization.js `toStandardTokenType`:
+  //   const STANDARD_TOKEN_TYPE_REGEXP = /\b(comment|string|regex|regexp)\b/;
+  //   match("string.key.json")[1] === "string" -> StandardTokenType.String (2)
+  const STANDARD_TOKEN_TYPE_REGEXP = /\b(comment|string|regex|regexp)\b/;
+  const toStandardTokenType = (tokenType) => {
+    const m = tokenType.match(STANDARD_TOKEN_TYPE_REGEXP);
+    if (!m) return 0; // Other
+    return m[1] === "comment" ? 1 : m[1] === "string" ? 2 : m[1] === "regex" || m[1] === "regexp" ? 3 : 0;
+  };
+  check("string.key.json tokenizes as StandardTokenType.String",
+    toStandardTokenType("string.key.json") === STRING_TOKEN);
+
+  check("default quickSuggestions BLOCKS String-token quick-suggest (the bug)",
+    valueFor(STRING_TOKEN, configDefault) !== "on");
+  check("our editor options UNBLOCK String-token quick-suggest",
+    valueFor(STRING_TOKEN, configFixed) === "on");
+  check("non-string tokens were already on by default",
+    valueFor(WORD_TOKEN, configDefault) === "on");
+  check("key position is a string token (string.key.json) -> is String type",
+    stringKey.includes(": 1, \"ma"));
+
+  // The trigger characters "$" path is unaffected: `$` is still NOT a word char.
+  check("`$` still takes the trigger-character path (shouldAutoTrigger=false)",
+    shouldAutoTrigger("[{ $", 5, wordPattern) === TRIGGER_OPENED);
 }
 
 console.log(`\n${passed} passed, ${failures} failed`);

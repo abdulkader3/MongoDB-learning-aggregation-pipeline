@@ -114,6 +114,7 @@ export default function SandboxPage() {
                 scrollBeyondLastLine: false,
                 automaticLayout: true,
                 fontFamily: "var(--font-geist-mono), monospace",
+                quickSuggestions: { other: true, comments: false, strings: true },
               }}
             />
           </div>

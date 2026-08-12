@@ -130,6 +130,7 @@ export function PipelineEditor({
             roundedSelection: false,
             automaticLayout: true,
             bracketPairColorization: { enabled: true },
+            quickSuggestions: { other: true, comments: false, strings: true },
           }}
         />
       </div>

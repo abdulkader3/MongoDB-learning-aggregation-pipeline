@@ -151,15 +151,6 @@ function createCompletionProvider(
       const offset = model.getOffsetAt(position);
       const ctx = getCompletionContext(text, offset);
 
-      // TEMP diagnostic for autocomplete debugging — remove after verification.
-      if (typeof window !== "undefined") {
-        console.log("[mongo-pipeline] completion triggered", {
-          kind: ctx.kind,
-          word: ctx.word,
-          available: OPERATORS_FOR_CONTEXT[ctx.kind].length,
-        });
-      }
-
       const ops = OPERATORS_FOR_CONTEXT[ctx.kind];
       if (ops.length === 0) {
         return { suggestions: [] };
